@@ -2,3 +2,6 @@
 
 # MacOS related
 .DS_Store
+
+images/kafka_binaries
+images/kafka_tars

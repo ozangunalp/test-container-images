@@ -51,3 +51,29 @@ do
     echo "[INFO] Push the manifest to the registry"
 	docker manifest push $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG
 done
+
+#####
+# SUPPORTED KAFKA KRAFT VERSIONS
+#####
+KRAFT_VERSIONS=$(cat supported_kraft.versions)
+
+#####
+# FOR EACH KAFKA VERSION TAG AND PUSH IMAGE
+#####
+for KRAFT_VERSION in $KRAFT_VERSIONS
+do
+    CURRENT_TAG="$PRODUCT_VERSION-kafka-kraft-$KRAFT_VERSION"
+    echo "[INFO] Delete the manifest to the registry, ignore the error if manifest doesn't exist"
+	docker manifest rm $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG || true
+    for ARCH in $ARCHITECTURES
+    do
+        echo "[INFO] Tagging strimzi/$PROJECT_NAME:$CURRENT_TAG-$ARCH to $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG-$ARCH ..."
+        docker tag strimzi/$PROJECT_NAME:$CURRENT_TAG-$ARCH $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG-$ARCH
+        echo "[INFO] Pushing image with name: $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG-$ARCH ..."
+	    docker push $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG-$ARCH
+        echo "[INFO] Create / Amend the manifest"
+	    docker manifest create $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG --amend $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG-$ARCH
+    done
+    echo "[INFO] Push the manifest to the registry"
+	docker manifest push $REGISTRY/$REGISTRY_ORGANIZATION/$PROJECT_NAME:$CURRENT_TAG
+done
